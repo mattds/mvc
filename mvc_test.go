@@ -18,7 +18,7 @@ func createTemplateFile(dir, name, content string, t *testing.T) {
 	} else {
 		defer template.Close()
 	}
-	
+
 	fmt.Fprintf(template, content)
 }
 
@@ -30,7 +30,7 @@ func createFolder(dir, name string, t *testing.T) string {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	
+
 	return newDir
 }
 
@@ -38,83 +38,83 @@ func mockController(name string) *Controller {
 	w := &mockResponseWriter{}
 
 	r, _ := http.NewRequest("GET", "/", nil)
-	
+
 	return NewController(w, r, name)
 }
 
 func TestViewTemplates(t *testing.T) {
 	root, err := ioutil.TempDir("", "mvc_test")
-	
+
 	fmt.Println(root)
 
 	if err == nil {
 		defer os.RemoveAll(root)
 	}
-	
+
 	// Template shared by all views unless overwritten
-	
+
 	createTemplateFile(root, "base.html", `Top: {{template "content.html" .}}`, t)
-	
+
 	// Home controller
 
 	hcDir := createFolder(root, "home", t)
-	
+
 	// Template shared by all home controller views
-	
+
 	createTemplateFile(hcDir, "base.html", `a {{template "content.html" .}}`, t)
-	
+
 	// Home controller index action
 
 	hcIndexActionDir := createFolder(hcDir, "index", t)
-	
+
 	createTemplateFile(hcIndexActionDir, "content.html", `plane`, t)
-	
+
 	// Home controller contact action
 
 	hcContactActionDir := createFolder(hcDir, "contact", t)
-	
+
 	createTemplateFile(hcContactActionDir, "content.html", `bird`, t)
-	
+
 	// User Controller
-	
+
 	ucDir := createFolder(root, "user", t)
-	
+
 	// Template shared by all user controller views
-	
+
 	createTemplateFile(ucDir, "base.html", `Hello {{template "content.html" .}}`, t)
-	
+
 	// User controller index action
 
 	ucIndexActionDir := createFolder(ucDir, "index", t)
-	
+
 	createTemplateFile(ucIndexActionDir, "content.html", `{{.Model}}`, t)
-	
+
 	// Admin Controller
-	
+
 	aDir := createFolder(root, "admin", t)
-	
+
 	// Admin controller index action
 
 	aIndexActionDir := createFolder(aDir, "index", t)
-	
+
 	createTemplateFile(aIndexActionDir, "content.html", `level`, t)
 
 	SetupViews(root)
-	
+
 	type testCase struct {
 		controller, action, expected, viewModel string
 	}
-	
-	testCases := []testCase {
+
+	testCases := []testCase{
 		testCase{"home", "index", "a plane", ""},
 		testCase{"home", "contact", "a bird", ""},
 		testCase{"user", "index", "Hello everyone", "everyone"},
 		testCase{"admin", "index", "Top: level", ""},
 	}
-	
+
 	for _, tc := range testCases {
 		c := mockController(tc.controller)
-		
+
 		if tc.viewModel != "" {
 			c.RenderViewModel(tc.action, tc.viewModel)
 		} else {

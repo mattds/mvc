@@ -187,10 +187,10 @@ var controllerName map[string]string = make(map[string]string)
 func Action(controller interface{}, action interface{}) http.HandlerFunc {
 	actionFn := reflect.ValueOf(action)
 	controllerFn := reflect.ValueOf(controller)
-	
+
 	actionFnType := actionFn.Type()
 	controllerFnType := controllerFn.Type()
-	
+
 	actionFnName := actionFnType.String()
 	controllerFnName := controllerFnType.String()
 
