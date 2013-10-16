@@ -112,8 +112,7 @@ An example folder and template layout is presented below:
 	│   ├── contact
 	│   │   └── content.html
 	└── user
-	    └── index
-	        └── base.html
+	    └── base.html (view for all user actions)
 
 Views can be constructed from multiple templates, and embedded within each other, e.g. base.html may be defined as
 
