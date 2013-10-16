@@ -163,8 +163,22 @@ func parseViewDirectory(dirname string, parentViews map[string]string) error {
 	return nil
 }
 
-func render(w http.ResponseWriter, name string, vm interface{}) {
+func render(w http.ResponseWriter, controllerName, view string, vm interface{}) {
+	name := fmt.Sprintf("%s/%s/%s", viewRootDir, controllerName, view)
+
 	t, ok := templates[name]
+
+	if !ok {
+		name = fmt.Sprintf("%s/%s", viewRootDir, controllerName)
+
+		t, ok = templates[name]
+	}
+
+	if !ok {
+		name = viewRootDir
+
+		t, ok = templates[name]
+	}
 
 	if !ok {
 		http.Error(w, fmt.Sprintf("The templates for %v were not found.", name), http.StatusInternalServerError)
@@ -183,7 +197,7 @@ func render(w http.ResponseWriter, name string, vm interface{}) {
 func (c *Controller) RenderViewModel(view string, viewModel interface{}) {
 	v := &View{c.CurrentAction, c.Name, view, c.ViewBag, viewModel}
 
-	render(c.ResponseWriter, fmt.Sprintf("%s/%s/%s", viewRootDir, c.Name, view), v)
+	render(c.ResponseWriter, c.Name, view, v)
 }
 
 // Render by convention uses the path "[view root dir]/[controller]/[view]" to lookup
