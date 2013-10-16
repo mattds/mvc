@@ -34,12 +34,12 @@ func createFolder(dir, name string, t *testing.T) string {
 	return newDir
 }
 
-func mockController(name string) *Controller {
+func mockController(name, action string) *Controller {
 	w := &mockResponseWriter{}
 
 	r, _ := http.NewRequest("GET", "/", nil)
 
-	return NewController(w, r, name)
+	return NewController(w, r, name, action)
 }
 
 func TestViewTemplates(t *testing.T) {
@@ -113,12 +113,12 @@ func TestViewTemplates(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		c := mockController(tc.controller)
+		c := mockController(tc.controller, tc.action)
 
 		if tc.viewModel != "" {
 			c.RenderViewModel(tc.action, tc.viewModel)
 		} else {
-			c.Render(tc.action)
+			c.Render()
 		}
 
 		expectedResult := []byte(tc.expected)

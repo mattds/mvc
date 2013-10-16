@@ -18,12 +18,15 @@ type Controller struct {
 	Request        *http.Request
 	Name           string
 	ViewBag        map[string]interface{}
+	CurrentAction  string
+	ExecuteAction  bool
 }
 
 // View is a type pre-populated by this framework, with values accessible within views.
 type View struct {
 	Action     string
 	Controller string
+	Name       string
 	Bag        map[string]interface{}
 	Model      interface{}
 }
@@ -64,8 +67,8 @@ func SetupViews(rootDir string) error {
 }
 
 // NewController can be used to instantiate a Controller instance.
-func NewController(w http.ResponseWriter, r *http.Request, name string) *Controller {
-	return &Controller{w, r, name, make(map[string]interface{})}
+func NewController(w http.ResponseWriter, r *http.Request, name, action string) *Controller {
+	return &Controller{w, r, name, make(map[string]interface{}), action, true}
 }
 
 // funcMap defines a set of additional functions callable within view templates.
@@ -161,30 +164,35 @@ func render(w http.ResponseWriter, name string, vm interface{}) {
 
 // RenderViewModel has the same functionality as Render, as well as the ability
 // to pass along a viewModel to the templates associated with the view.
-func (c *Controller) RenderViewModel(action string, viewModel interface{}) {
-	view := &View{action, c.Name, c.ViewBag, viewModel}
+func (c *Controller) RenderViewModel(view string, viewModel interface{}) {
+	v := &View{c.CurrentAction, c.Name, view, c.ViewBag, viewModel}
 
-	render(c.ResponseWriter, fmt.Sprintf("%s/%s/%s", viewRootDir, c.Name, action), view)
+	render(c.ResponseWriter, fmt.Sprintf("%s/%s/%s", viewRootDir, c.Name, view), v)
 }
 
-// Render by convention uses the path "[view root dir]/[controller]/[action]" to lookup
+// Render by convention uses the path "[view root dir]/[controller]/[view]" to lookup
 // a view to render. A view is rendered by executing the base.html template
 // associated with that view.
-func (c *Controller) Render(action string) {
-	c.RenderViewModel(action, nil)
+func (c *Controller) RenderView(view string) {
+	c.RenderViewModel(view, nil)
+}
+
+// Render renders the view of the current action
+func (c *Controller) Render() {
+	c.RenderView(c.CurrentAction)
 }
 
 var actionChecked map[string]bool = make(map[string]bool)
 
 var controllerChecked map[string]bool = make(map[string]bool)
 
-var controllerName map[string]string = make(map[string]string)
+var controllerNames map[string]string = make(map[string]string)
 
 // Action can be used to wrap a controller method as an http.HandlerFunc.
 // The controller parameter should be of the type: func (*Controller) *SomeCustomController
 // The action parameter should be of the type: func (*SomeCustomController).
 // Any void method with no parameters on *SomeCustomController would be suitable to pass as the action.
-func Action(controller interface{}, action interface{}) http.HandlerFunc {
+func Action(name string, controller interface{}, action interface{}) http.HandlerFunc {
 	actionFn := reflect.ValueOf(action)
 	controllerFn := reflect.ValueOf(controller)
 
@@ -226,20 +234,22 @@ func Action(controller interface{}, action interface{}) http.HandlerFunc {
 
 	controllerTypeName := controllerFnType.Out(0).String()
 
-	name, ok := controllerName[controllerTypeName]
+	controllerName, ok := controllerNames[controllerTypeName]
 
 	if !ok {
-		name = controllerTypeName[strings.LastIndex(controllerTypeName, ".")+1:]
-		name = strings.Replace(strings.ToLower(name), "controller", "", 1)
+		controllerName = controllerTypeName[strings.LastIndex(controllerTypeName, ".")+1:]
+		controllerName = strings.Replace(strings.ToLower(controllerName), "controller", "", 1)
 
-		controllerName[controllerTypeName] = name
+		controllerNames[controllerTypeName] = controllerName
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		controller := NewController(w, r, name)
+		controller := NewController(w, r, controllerName, name)
 
 		childController := controllerFn.Call([]reflect.Value{reflect.ValueOf(controller)})
 
-		actionFn.Call(childController)
+		if controller.ExecuteAction {
+			actionFn.Call(childController)
+		}
 	}
 }
