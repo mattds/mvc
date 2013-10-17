@@ -50,17 +50,17 @@ func createFolder(dir, name string, t *testing.T) string {
 	return newDir
 }
 
-func mockController(name, action string) *Controller {
+func mockController(name string) *Controller {
 	w := &mockResponseWriter{}
 
 	r, _ := http.NewRequest("GET", "/", nil)
 
-	return NewController(w, r, name, action)
+	return NewController(w, r, name)
 }
 
 func TestViewTemplates(t *testing.T) {
 	root, err := ioutil.TempDir("", "mvc_test")
-	
+
 	if err == nil {
 		defer os.RemoveAll(root)
 	}
@@ -116,7 +116,7 @@ func TestViewTemplates(t *testing.T) {
 	SetupViews(root)
 
 	type testCase struct {
-		controller, action, expected, viewModel string
+		controller, view, expected, viewModel string
 	}
 
 	testCases := []testCase{
@@ -127,12 +127,12 @@ func TestViewTemplates(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		c := mockController(tc.controller, tc.action)
+		c := mockController(tc.controller)
 
 		if tc.viewModel != "" {
-			c.RenderViewModel(tc.action, tc.viewModel)
+			c.RenderViewModel(tc.view, tc.viewModel)
 		} else {
-			c.Render()
+			c.Render(tc.view)
 		}
 
 		expectedResult := []byte(tc.expected)

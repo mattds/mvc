@@ -42,8 +42,6 @@ type Controller struct {
 	Request        *http.Request
 	Name           string
 	ViewBag        map[string]interface{}
-	CurrentAction  string
-	ExecuteAction  bool
 }
 ```
 
@@ -53,15 +51,17 @@ A user defined controller would be created as a struct with an *mvc.Controller f
 type HomeController struct{ *mvc.Controller }
 ```
 
-Every controller needs a constructor method with a single *mvc.Controller parameter, e.g.
+The framework convention is for every controller to define an action type of the below form and a corresponding handler associated with that type.
 
 ```go
-func NewHomeController(c *mvc.Controller) *HomeController {
-	return &HomeController{c}
+type HomeControllerAction func(*HomeController)
+
+func (action HomeControllerAction) ActionHandler(w http.ResponseWriter, r *http.Request) {
+	action(&HomeController{mvc.NewController(w, r, "home")})
 }
 ```
 
-A new controller is created for each action call, and pre-populated as a context for the action. The user defined constructor can execute logic before each action is called, modify the context itself and cancel the execution of the original action if needed.
+A new controller should be created for each action call, and pre-populated as a context for the action (the helper function mvc.NewController can be used as above to simplify this). The user defined ActionHandler provides the flexibility to execute an action conditionally or execute logic before and after each action is called.
 
 ###Actions
 
@@ -70,16 +70,16 @@ An action is any parameterless void method defined on a controller, e.g.
 ```go
 func (c *HomeController) Index() {
  	c.ViewBag["title"] = "A blog"
- 	c.Render()
+ 	c.Render("index")
 }
 ```
  
 ###Routing
  
-By design, the mvc package does not provide custom url routing. This functionality is sufficiently catered for by the http package and external packages such as Gorilla mux. It does however provide an Action function to wrap a controller method as an http.HandlerFunc as below:
+By design, the mvc package does not provide custom url routing. This functionality is sufficiently catered for by the http package and external packages such as Gorilla mux. An example of how to handle a route by an action is given below:
 
 ```go
-http.HandleFunc("/", mvc.Action("index", NewHomeController, (*HomeController).Index))
+http.HandleFunc("/", HomeControllerAction((*HomeController).Index).ActionHandler)
 ```
 
 ###Views
@@ -88,7 +88,6 @@ The framework defines a View type, passed along to the templates constituting a 
 
 ```go
 type View struct {
- 	Action     string
  	Controller string
  	Name       string
  	Bag        map[string]interface{}
@@ -131,8 +130,7 @@ Where content.html could be as simple as:
 Views are rendered within actions, e.g.
  
 ```go
-c.Render() // Renders a view associated with the action of the controller.
-c.RenderView(viewName) // Renders a view associated with the controller.
+c.Render(viewName) // Renders a view associated with the controller.
 c.RenderViewModel(viewName,viewModel) // viewModel is assigned to the Model field of the View struct accessible from a view template.
 ```
  
