@@ -61,7 +61,7 @@ func (action HomeControllerAction) ActionHandler(w http.ResponseWriter, r *http.
 }
 ```
 
-A new controller should be created for each action call, and pre-populated as a context for the action (the helper function mvc.NewController can be used as above to simplify this). The user defined ActionHandler provides the flexibility to execute an action conditionally or execute logic before and after each action is called.
+As illustrated above, a new controller is created for each action call, and pre-populated as a context for the action. A user defined ActionHandler provides the flexibility to execute an action conditionally or execute logic before and after any action is called in a given controller.
 
 ###Actions
 
@@ -76,7 +76,7 @@ func (c *HomeController) Index() {
  
 ###Routing
  
-By design, the mvc package does not provide custom url routing. This functionality is sufficiently catered for by the http package and external packages such as Gorilla mux. An example of how to handle a route by an action is given below:
+By design, the mvc package does not provide custom url routing. This functionality is sufficiently catered for by the http package and external packages such as Gorilla mux. An example of how to handle a route via an action is given below:
 
 ```go
 http.HandleFunc("/", HomeControllerAction((*HomeController).Index).ActionHandler)
@@ -95,7 +95,7 @@ type View struct {
 }
 ```
   
-To define views corresponding to actions, native go templates would be created in a convention driven location. The conventional location being [view root dir]/[controller]/[view] where [view root dir] = "views" if not specifically set otherwise. Templates are shared by subfolders unless a template by the same name is defined in a subfolder which is then used instead. The primary template should by convention be named "base.html".
+Native go templates are used to define views renderable within a controller. These views should be created in a convention driven location. The conventional location being [view root dir]/[controller]/[view] where [view root dir] = "views" if not specifically set otherwise. Templates are shared by subfolders; a template with the same name in a lower level subfolder would take precedence. A primary template named "base.html" is required, whether shared between all views or specific to a particular view.
 
 An example folder and template layout is presented below:
 
@@ -111,7 +111,7 @@ An example folder and template layout is presented below:
 	│   ├── contact
 	│   │   └── content.html
 	└── user
-	    └── base.html (view for all user actions)
+	    └── base.html (used by all views rendered from the user controller, individual folders per view need not be explicitly created)
 
 Views can be constructed from multiple templates, and embedded within each other, e.g. base.html may be defined as
 
