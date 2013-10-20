@@ -51,17 +51,17 @@ A user defined controller would be created as a struct with an *mvc.Controller f
 type HomeController struct{ *mvc.Controller }
 ```
 
-The framework convention is for every controller to define an action type of the below form and a corresponding handler associated with that type.
+To simplify routing, a standard approach to creating a handler is suggested. The recommended approach is for every controller to define an action type of the below form and a corresponding ServeHTTP method associated with that type.
 
 ```go
 type HomeControllerAction func(*HomeController)
 
-func (action HomeControllerAction) ActionHandler(w http.ResponseWriter, r *http.Request) {
+func (action HomeControllerAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	action(&HomeController{mvc.NewController(w, r, "home")})
 }
 ```
 
-As illustrated above, a new controller is created for each action call, and pre-populated as a context for the action. A user defined ActionHandler provides the flexibility to execute an action conditionally or execute logic before and after any action is called in a given controller.
+This approach creates a new controller for each action call, which provides a context for the action. This approach also gives the flexibility to execute an action conditionally or execute logic before and after any action is called in a given controller.
 
 ###Actions
 
@@ -79,7 +79,7 @@ func (c *HomeController) Index() {
 By design, the mvc package does not provide custom url routing. This functionality is sufficiently catered for by the http package and external packages such as Gorilla mux. An example of how to handle a route via an action is given below:
 
 ```go
-http.HandleFunc("/", HomeControllerAction((*HomeController).Index).ActionHandler)
+http.Handle("/", HomeControllerAction((*HomeController).Index))
 ```
 
 ###Views
