@@ -61,7 +61,7 @@ func (action HomeControllerAction) ServeHTTP(w http.ResponseWriter, r *http.Requ
 }
 ```
 
-This approach creates a new controller for each action call, which provides a context for the action. This approach also gives the flexibility to execute an action conditionally or execute logic before and after any action is called in a given controller.
+This approach creates a new controller for each action call, which provides the necessary context for the action be able to render a view. This approach also gives the flexibility to execute an action conditionally or execute logic before and after any action is called in a given controller.
 
 ###Actions
 
