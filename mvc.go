@@ -28,10 +28,10 @@ import (
 
 // Controller provides a base type, from which a user defined controller would extend.
 type Controller struct {
-	ResponseWriter http.ResponseWriter
-	Request        *http.Request
-	Name           string
-	ViewBag        map[string]interface{}
+	http.ResponseWriter
+	Request *http.Request
+	Name    string
+	ViewBag map[string]interface{}
 }
 
 // View is a type pre-populated by this framework, with values accessible within views.
@@ -192,7 +192,7 @@ func render(w http.ResponseWriter, controllerName, view string, vm interface{}) 
 func (c *Controller) RenderViewModel(view string, viewModel interface{}) {
 	v := &View{c.Name, view, c.ViewBag, viewModel}
 
-	render(c.ResponseWriter, c.Name, view, v)
+	render(c, c.Name, view, v)
 }
 
 // Render by convention uses the path "[view root dir]/[controller]/[view]" to lookup

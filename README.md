@@ -38,7 +38,7 @@ The framework provides a Controller type; defined as below:
 
 ```go
 type Controller struct {
-	ResponseWriter http.ResponseWriter
+	http.ResponseWriter
 	Request        *http.Request
 	Name           string
 	ViewBag        map[string]interface{}
