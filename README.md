@@ -4,7 +4,7 @@ Go MVC framework
 About
 -----
 
-The mvc package provides a lightweight mvc patterned web application framework in Go. Featuring action handlers and template based views.
+The mvc package provides a lightweight mvc patterned web application framework in Go. The focus of this framework is on the view aspect, providing a simple way to share templates between views.
 
 Installation
 ------------
@@ -51,7 +51,7 @@ A user defined controller would be created as a struct with an *mvc.Controller f
 type HomeController struct{ *mvc.Controller }
 ```
 
-To simplify routing, a standard approach to creating a handler is suggested. The recommended approach is for every controller to define an action type of the below form and a corresponding ServeHTTP method associated with that type.
+To simplify routing, a standard approach to creating a handler is suggested. The recommended approach is for every controller to define an action type of the below form and a corresponding ServeHTTP method associated with that type as the below example illustrates.
 
 ```go
 type HomeControllerAction func(*HomeController)
