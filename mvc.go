@@ -18,12 +18,15 @@ limitations under the License.
 package mvc
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"os"
 	"path"
+	"strconv"
+	"strings"
 )
 
 // Controller provides a base type, from which a user defined controller would extend.
@@ -88,6 +91,18 @@ var funcMap = template.FuncMap{
 	// this can be used to ouput html comments for instance.
 	"noescape": func(x string) template.HTML {
 		return template.HTML(x)
+	},
+	// rawurl provides a way to output a url which is not escaped.
+	"rawurl": func(x string) template.URL {
+		return template.URL(x)
+	},
+	// lower provides a helper method to lowercase a string within a view.
+	"lower": func(x string) string {
+		return strings.ToLower(x)
+	},
+	// upper provides a helper method to uppercase a string within a view.
+	"upper": func(x string) string {
+		return strings.ToUpper(x)
 	},
 }
 
@@ -200,4 +215,59 @@ func (c *Controller) RenderViewModel(view string, viewModel interface{}) {
 // associated with that view.
 func (c *Controller) Render(view string) {
 	c.RenderViewModel(view, nil)
+}
+
+// JsonContent can be used to write to the response, the provided model, as json.
+func (c *Controller) JsonContent(model interface{}) {
+	c.ResponseWriter.Header().Set("Content-Type", "application/javascript")
+	json.NewEncoder(c.ResponseWriter).Encode(model)
+}
+
+// TextContent can be used to write to the response, the provided text.
+func (c *Controller) TextContent(text string) {
+	c.ResponseWriter.Header().Set("Content-Type", "text/plain")
+	fmt.Fprintf(c.ResponseWriter, "%v", text)
+}
+
+// GetStringSlice returns the URL query values associated with the provided query parameter as a slice of strings.
+func (c *Controller) GetStringSlice(queryParam string) []string {
+	return c.Request.URL.Query()[queryParam]
+}
+
+// GetString returns the URL query value associated with the provided query parameter as a string.
+// If the provided query parameter does not have a value associated with it, the provided default value is returned.
+func (c *Controller) GetString(queryParam string, def string) string {
+	val := c.GetStringSlice(queryParam)
+
+	if len(val) == 0 {
+		return def
+	}
+
+	return val[0]
+}
+
+// GetInt64 returns the URL query value associated with the provided query parameter as an int64.
+// If the provided query parameter does not have a value associated with it, or if the value is
+// not parsable as numeric, the provided default value is returned.
+func (c *Controller) GetInt64(queryParam string, def int64) int64 {
+	s := c.GetString(queryParam, "")
+
+	if s == "" {
+		return def
+	}
+
+	i, err := strconv.ParseInt(s, 10, 64)
+
+	if err != nil {
+		return def
+	}
+
+	return i
+}
+
+// GetInt returns the URL query value associated with the provided query parameter as an int.
+// If the provided query parameter does not have a value associated with it, or if the value is
+// not parsable as numeric, the provided default value is returned.
+func (c *Controller) GetInt(queryParam string, def int64) int {
+	return int(c.GetInt64(queryParam, def))
 }
